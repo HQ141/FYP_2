@@ -192,4 +192,5 @@ mal_input=verify_inputs()
 for i in mal_input:
     hash=files_to_ipfs(i)
     _file = i.split("/")
-    push_to_chain(f"{i[-1]}","rsu1",f"{i[-1]}",model_hash,hash)
+    print(_file)
+    push_to_chain(f"{_file[-1]}","rsu1",f"{_file[-1]}",model_hash,hash)

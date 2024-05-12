@@ -17,7 +17,7 @@ export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org2.examp
 export CORE_PEER_ADDRESS=localhost:9051
 peer lifecycle chaincode install basic.tar.gz
 peer lifecycle chaincode queryinstalled
-export CC_PACKAGE_ID=basic_1.0:c2bf52ec8617fcb1b9df0ac4d44f05dcee0c8f278a1e443200e22976649cbf94
+export CC_PACKAGE_ID=basic_1.0:8528524b102dfdb0c1a03a483562c3284bf6f57d8b145a6f53b1d27dd7b97f5b
 peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --channelID mychannel --name basic --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1 --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 export CORE_PEER_LOCALMSPID="Org1MSP"
 export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
