@@ -2,7 +2,7 @@ import os
 import collections
 import glob
 import requests
-import ipfsapi
+import ipfsApi
 import numpy as np
 import pandas as pd
 from requests.utils import requote_uri
@@ -21,12 +21,11 @@ def push_to_chain(id,edgeserver,vehicle,model,blockhash):
     "model":(None, model),
     "blockhash":(None, blockhash),
     }   
-
     response = requests.post('http://localhost:3333/data', files=files)
-
     return
 
 def get_files_ipfs():
+    
     return
 def files_to_ipfs(filename):
     api = ipfsApi.Client('127.0.0.1', 5001)
@@ -34,7 +33,7 @@ def files_to_ipfs(filename):
     print(res)
     return (res[0]['Hash'])
 def recraft_inputs():
-    if os.path.exists(r'./model_weights.hdf5'):
+    if os.path.exists(r'model_weights.hdf5'):
         print("File exists")
     else:
         get_model_weights()

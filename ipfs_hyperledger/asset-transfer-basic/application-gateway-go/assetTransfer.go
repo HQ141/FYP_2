@@ -126,7 +126,13 @@ func newSign() identity.Sign {
 
 	return sign
 }
-func connect_hyperledger() {
+func main() {
+
+	http.HandleFunc("/data", postdata)
+	http.HandleFunc("/updaterep", chrep)
+	http.HandleFunc("/current", queryall)
+	http.HandleFunc("/data_state", querydata)
+	http.HandleFunc("/rep_state", queryrep)
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
 	clientConnection := newGrpcConnection()
 	defer clientConnection.Close()
@@ -140,10 +146,10 @@ func connect_hyperledger() {
 		client.WithSign(sign),
 		client.WithClientConnection(clientConnection),
 		// Default timeouts for different gRPC calls
-		client.WithEvaluateTimeout(1*time.Second),
-		client.WithEndorseTimeout(1*time.Second),
-		client.WithSubmitTimeout(1*time.Second),
-		client.WithCommitStatusTimeout(1*time.Second),
+		client.WithEvaluateTimeout(5*time.Second),
+		client.WithEndorseTimeout(15*time.Second),
+		client.WithSubmitTimeout(5*time.Second),
+		client.WithCommitStatusTimeout(1*time.Minute),
 	)
 	if err != nil {
 		panic(err)
@@ -163,15 +169,6 @@ func connect_hyperledger() {
 
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(chaincodeName)
-}
-func main() {
-
-	http.HandleFunc("/data", postdata)
-	http.HandleFunc("/updaterep", chrep)
-	http.HandleFunc("/current", queryall)
-	http.HandleFunc("/data_state", querydata)
-	http.HandleFunc("/rep_state", queryrep)
-	connect_hyperledger()
 	herr := http.ListenAndServe(":3333", nil)
 	if errors.Is(herr, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
@@ -192,9 +189,8 @@ func main() {
 
 func postdata(w http.ResponseWriter, r *http.Request) {
 	var newblock Data_block
-	print("hello")
 	var now = time.Now()
-	newblock.ID = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
+	newblock.ID = fmt.Sprintf("block%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
 	newblock.EdgeServer = r.PostFormValue("edgeserver")
 	newblock.Vehicle = r.PostFormValue("vehicle")
 	newblock.Model = r.PostFormValue("model")
@@ -205,6 +201,7 @@ func postdata(w http.ResponseWriter, r *http.Request) {
 func chrep(w http.ResponseWriter, r *http.Request) {
 	_id := r.PostFormValue("id")
 	updaterep(_id)
+
 }
 func querydata(w http.ResponseWriter, r *http.Request) {
 	state := getAlldatablocks()
@@ -226,7 +223,7 @@ func initLedger() {
 
 	_, err := contract.SubmitTransaction("InitLedger")
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		fmt.Printf("*** Transaction Failed\n")
 	}
 
 	fmt.Printf("*** Transaction committed successfully\n")
@@ -236,7 +233,7 @@ func getAlldatablocks() string {
 
 	evaluateResult, err := contract.EvaluateTransaction("GetAllDatablocks")
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		fmt.Printf("*** Transaction Failed\n")
 	}
 	result := formatJSON(evaluateResult)
 	return result
@@ -266,27 +263,29 @@ func getAllAssets() string {
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
 func createAsset(newAsset Data_block) {
-	fmt.Printf("\n--> Submit Transaction: CreateAsset, creates new asset \n")
+	fmt.Printf("\n--> Submit Transaction: CreateAsset, creates new DataBlock \n")
 	rep := "10"
 
 	_, err := contract.SubmitTransaction("CreateData_block", newAsset.ID, newAsset.EdgeServer, newAsset.Vehicle, newAsset.Model, newAsset.BlockHash, rep)
 
 	if err != nil {
-		print("Fuck")
-		//panic(fmt.Errorf("failed to submit transaction: %w", err))
+		fmt.Printf("failed to submit transaction\n")
+		print(fmt.Errorf("failed to submit transaction: %w", err))
+	} else {
+		fmt.Printf("*** Transaction committed successfully\n")
 	}
 
-	fmt.Printf("*** Transaction committed successfully\n")
 }
-func updaterep(_id string, _rep string) {
-	fmt.Printf("\n--> Submit Transaction: Update Reputation, creates new asset \n")
-
+func updaterep(_id string) {
+	fmt.Printf("\n--> Submit Transaction: Update Reputation, Updates Reputation \n")
+	print(_id)
 	_, err := contract.SubmitTransaction("DecRepute", _id)
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		print(fmt.Errorf("failed to submit transaction: %w", err))
+	} else {
+		fmt.Printf("*** Transaction committed successfully\n")
 	}
 
-	fmt.Printf("*** Transaction committed successfully\n")
 }
 func getrep(_id string) []byte {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")

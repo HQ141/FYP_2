@@ -54,6 +54,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
 	}*/
 	assets := []Repute{
+		{ID: "ev0", Reputation: 5},
 		{ID: "ev1", Reputation: 5},
 		{ID: "ev2", Reputation: 5},
 		{ID: "ev3", Reputation: 5},
@@ -64,7 +65,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		{ID: "ev8", Reputation: 5},
 		{ID: "ev9", Reputation: 5},
 		{ID: "rsu1", Reputation: 5},
-		{ID: "rsu2", Reputation: 5},
+		{ID: "rsu2", Reputation: 0},
 	}
 
 	for _, asset := range assets {
@@ -97,7 +98,7 @@ func (s *SmartContract) CreateData_block(ctx contractapi.TransactionContextInter
 	ev_rep, _ := s.GetRepute(ctx, vehicle)
 	rsu_rep, _ := s.GetRepute(ctx, edgeserver)
 	_blockrep := ev_rep + rsu_rep
-	if _blockrep < 5 {
+	if _blockrep < 6 {
 		return fmt.Errorf("block reputation too low")
 	}
 	exists, err := s.AssetExists(ctx, id)
@@ -209,19 +210,19 @@ func (s *SmartContract) DecRepute(ctx contractapi.TransactionContextInterface, _
 func (s *SmartContract) GetRepute(ctx contractapi.TransactionContextInterface, _id string) (int, error) {
 	match, _ := regexp.MatchString("((ev[0-9]*)|(rsu[0-9]*))", _id)
 	if !match {
-		return 99999, fmt.Errorf("not a valid reputationid")
+		return 0, fmt.Errorf("not a valid reputationid")
 	}
 	assetJSON, err := ctx.GetStub().GetState(_id)
 	if err != nil {
-		return 99999, fmt.Errorf("failed to read from world state: %v", err)
+		return 0, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if assetJSON == nil {
-		return 99999, fmt.Errorf("the asset %s does not exist", _id)
+		return 0, fmt.Errorf("the asset %s does not exist", _id)
 	}
 	var rep Repute
 	err = json.Unmarshal(assetJSON, &rep)
 	if err != nil {
-		return 99999, err
+		return 0, err
 	}
 	return rep.Reputation, nil
 }
@@ -243,7 +244,9 @@ func (s *SmartContract) GetAllDatablocks(ctx contractapi.TransactionContextInter
 		var db Data_block
 		err = json.Unmarshal(queryResponse.Value, &db)
 		if err == nil {
-			record = append(record, &db)
+			if db.Model != "" {
+				record = append(record, &db)
+			}
 		}
 
 	}
@@ -267,7 +270,9 @@ func (s *SmartContract) GetAllReputation(ctx contractapi.TransactionContextInter
 		var rep Repute
 		err = json.Unmarshal(queryResponse.Value, &rep)
 		if err == nil {
-			record = append(record, &rep)
+			if rep.Reputation != 0 {
+				record = append(record, &rep)
+			}
 		}
 
 	}
@@ -295,15 +300,17 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 		var rep Repute
 		err = json.Unmarshal(queryResponse.Value, &db)
 		if err == nil {
-			asset := _Asset{
-				ID:         db.ID,
-				Reputation: 0,
-				BlockHash:  db.BlockHash,
-				EdgeServer: db.EdgeServer,
-				Model:      db.Model,
-				Vehicle:    db.Vehicle,
+			if db.Model != "" {
+				asset := _Asset{
+					ID:         db.ID,
+					Reputation: 0,
+					BlockHash:  db.BlockHash,
+					EdgeServer: db.EdgeServer,
+					Model:      db.Model,
+					Vehicle:    db.Vehicle,
+				}
+				record = append(record, &asset)
 			}
-			record = append(record, &asset)
 		}
 		err = json.Unmarshal(queryResponse.Value, &rep)
 		if err == nil {
@@ -315,7 +322,9 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 				Model:      "",
 				Vehicle:    "",
 			}
-			record = append(record, &asset)
+			if asset.Reputation != 0 {
+				record = append(record, &asset)
+			}
 		}
 
 	}
