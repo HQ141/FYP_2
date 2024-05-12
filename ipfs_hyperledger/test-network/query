@@ -1,1 +1,3 @@
 peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAssets"]}'
+peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllDatablocks"]}'
+peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllReputation"]}'
