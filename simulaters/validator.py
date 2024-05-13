@@ -182,6 +182,7 @@ def verify_inputs():
         if((predicted_class[0]!=majority) ):
             if(prev_class[a]==0):
                 wr_class.append(file)
+                print(wr_class)
             _file = file.split("/")
             update_rep_ev(_file[-1])    
         a=a+1

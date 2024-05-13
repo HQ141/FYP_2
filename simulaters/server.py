@@ -262,10 +262,10 @@ def craft_files():
         predicted_class = single_output.argmax(axis=1)
         print(predicted_class[0])
         if(predicted_class[0]==majority):
-            #test['mal'] = 0
-            test['mal'] = 1
+            test['mal'] = 0
         else:
-            test['mal'] = 1
+            test['mal'] = 0
+            #test['mal'] = 1
         test.to_csv(f"../crafted_files/ev{a}")
         hash=files_to_ipfs(f"../crafted_files/ev{a}")
         push_to_chain(f"{a}","rsu1",f"ev{a}",model_hash,hash)
